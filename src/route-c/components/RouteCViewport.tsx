@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, useRef, useCallback, Suspense } from 'react';
+import React, { useEffect, useState, useRef, useCallback, useMemo, Suspense } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls, Html } from '@react-three/drei';
 import { Loader } from '@/components/common/Loader';
@@ -325,6 +325,54 @@ export const RouteCViewport: React.FC = () => {
   const [isViewportLoading, setIsViewportLoading] = useState<boolean>(true);
   const [trackingError, setTrackingError] = useState<string | null>(null);
 
+  // Scene Focus / World Pan Offset State (Independent from Head Tracking Parallax)
+  const [worldPanOffset, setWorldPanOffset] = useState<[number, number, number]>([0, 0, 0]);
+  const [targetPanOffset, setTargetPanOffset] = useState<[number, number, number]>([0, 0, 0]);
+
+  // Visual position mapping for Mini Jaipur landmarks
+  const visualPositions: Record<string, [number, number, number]> = useMemo(
+    () => ({
+      'jaipur-hawa-mahal': [-12, 4, -5],
+      'jaipur-amer-fort': [14, 5, -12],
+      'jaipur-city-palace': [2, 1, 8],
+      'jaipur-mini-root': [0, 0, 0],
+    }),
+    []
+  );
+
+  // Smooth ~500ms cubic easeOut animation ticker for worldPanOffset transitions
+  useEffect(() => {
+    let animationFrameId: number;
+    const startTime = performance.now();
+    const startPan = [...worldPanOffset] as [number, number, number];
+    const targetPan = targetPanOffset;
+
+    const animatePan = () => {
+      const elapsed = performance.now() - startTime;
+      const progress = Math.min(1, elapsed / 500); // 500ms smooth animation duration
+      const easeProgress = 1 - Math.pow(1 - progress, 3); // Cubic easeOut
+
+      const nx = startPan[0] + (targetPan[0] - startPan[0]) * easeProgress;
+      const ny = startPan[1] + (targetPan[1] - startPan[1]) * easeProgress;
+      const nz = startPan[2] + (targetPan[2] - startPan[2]) * easeProgress;
+
+      setWorldPanOffset([nx, ny, nz]);
+
+      if (progress < 1) {
+        animationFrameId = requestAnimationFrame(animatePan);
+      }
+    };
+
+    animationFrameId = requestAnimationFrame(animatePan);
+    return () => cancelAnimationFrame(animationFrameId);
+  }, [targetPanOffset]);
+
+  const handleSelectJaipurLandmark = useCallback((nodeId: string) => {
+    setSelectedJaipurNodeId(nodeId);
+    const targetPos = visualPositions[nodeId] || [0, 0, 0];
+    setTargetPanOffset(targetPos);
+  }, [visualPositions]);
+
   const virtualDriverRef = useRef(new VirtualPointCloudDriver());
   const physicalDriverRef = useRef(new PhysicalHardwareDriverStub());
 
@@ -362,9 +410,28 @@ export const RouteCViewport: React.FC = () => {
     setViewerState(updated);
   };
 
-  // Keyboard listener for manual WASDQE controls when in manual mode
+  // Keyboard listener for manual WASDQE + Arrow Key scene panning controls
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Arrow keys pan the scene window center directly (separate from WASDQE head simulation)
+      const panStep = 1.5;
+      if (e.key === 'ArrowLeft') {
+        setTargetPanOffset((prev) => [prev[0] - panStep, prev[1], prev[2]]);
+        return;
+      }
+      if (e.key === 'ArrowRight') {
+        setTargetPanOffset((prev) => [prev[0] + panStep, prev[1], prev[2]]);
+        return;
+      }
+      if (e.key === 'ArrowUp') {
+        setTargetPanOffset((prev) => [prev[0], prev[1] + panStep, prev[2]]);
+        return;
+      }
+      if (e.key === 'ArrowDown') {
+        setTargetPanOffset((prev) => [prev[0], prev[1] - panStep, prev[2]]);
+        return;
+      }
+
       if (cameraMode !== 'manual' && trackingMode !== 'manual') return;
 
       const step = 0.5;
@@ -624,6 +691,43 @@ export const RouteCViewport: React.FC = () => {
               <Eye className="w-3.5 h-3.5" /> Debug Overlay
             </button>
           </div>
+
+          {/* Landmark Focus Quick Selector Buttons */}
+          {sceneMode === 'jaipur-mini' && (
+            <div className="flex items-center gap-1 bg-gray-900 p-1 rounded-xl border border-gray-800 text-xs">
+              <span className="text-[10px] text-purple-300 font-mono px-1.5 uppercase font-bold">Focus:</span>
+              <button
+                onClick={() => handleSelectJaipurLandmark('jaipur-hawa-mahal')}
+                className={`px-2 py-0.5 rounded-lg text-xs font-bold transition-all ${
+                  selectedJaipurNodeId === 'jaipur-hawa-mahal' ? 'bg-rose-500 text-white glow-purple' : 'text-gray-400 hover:text-white'
+                }`}
+              >
+                Hawa Mahal
+              </button>
+              <button
+                onClick={() => handleSelectJaipurLandmark('jaipur-amer-fort')}
+                className={`px-2 py-0.5 rounded-lg text-xs font-bold transition-all ${
+                  selectedJaipurNodeId === 'jaipur-amer-fort' ? 'bg-amber-500 text-gray-950 glow-amber' : 'text-gray-400 hover:text-white'
+                }`}
+              >
+                Amer Fort
+              </button>
+              <button
+                onClick={() => handleSelectJaipurLandmark('jaipur-city-palace')}
+                className={`px-2 py-0.5 rounded-lg text-xs font-bold transition-all ${
+                  selectedJaipurNodeId === 'jaipur-city-palace' ? 'bg-cyan-500 text-gray-950 glow-cyan' : 'text-gray-400 hover:text-white'
+                }`}
+              >
+                City Palace
+              </button>
+              <button
+                onClick={() => handleSelectJaipurLandmark('jaipur-mini-root')}
+                className="px-2 py-0.5 rounded-lg text-xs font-bold text-gray-400 hover:text-white"
+              >
+                Reset Center
+              </button>
+            </div>
+          )}
         </div>
       </header>
 
@@ -656,6 +760,7 @@ export const RouteCViewport: React.FC = () => {
           {/* Off-Axis Perspective Camera Rig (Drives camera position & asymmetric projection matrix) */}
           <RouteCCameraRig
             viewerStateRef={viewerStateRef}
+            worldPanOffset={worldPanOffset}
             cameraMode={cameraMode}
             onFrustumUpdate={handleFrustumUpdate}
           />
@@ -677,7 +782,7 @@ export const RouteCViewport: React.FC = () => {
             {sceneMode === 'jaipur-mini' && (
               <MiniJaipur3DScene
                 selectedNodeId={selectedJaipurNodeId}
-                onSelectNode={(id) => setSelectedJaipurNodeId(id)}
+                onSelectNode={(id) => handleSelectJaipurLandmark(id)}
               />
             )}
 

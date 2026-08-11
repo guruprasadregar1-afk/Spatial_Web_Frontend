@@ -13,6 +13,7 @@ import {
 
 export interface RouteCCameraRigProps {
   viewerStateRef: React.MutableRefObject<SpatialViewerState>;
+  worldPanOffset?: [number, number, number];
   cameraMode: 'spatial' | 'manual' | 'orbit';
   screenDimensions?: ScreenDimensions;
   onFrustumUpdate?: (bounds: FrustumBounds, camPos: [number, number, number]) => void;
@@ -20,6 +21,7 @@ export interface RouteCCameraRigProps {
 
 export const RouteCCameraRig: React.FC<RouteCCameraRigProps> = ({
   viewerStateRef,
+  worldPanOffset = [0, 0, 0],
   cameraMode,
   screenDimensions = { width: 24, height: 14 },
   onFrustumUpdate,
@@ -33,14 +35,15 @@ export const RouteCCameraRig: React.FC<RouteCCameraRigProps> = ({
     // Single source of truth: Read latest viewer state directly from mutable ref (no React state lag!)
     const state = viewerStateRef.current;
     const [vx, vy, vz] = state.position;
+    const [px, py, pz] = worldPanOffset;
 
-    // 1. Position camera at calibrated viewer world position (vx, vy, vz)
-    camera.position.set(vx, vy, vz);
+    // 1. Position camera at composed headOffset + worldPanOffset position
+    camera.position.set(vx + px, vy + py, vz + pz);
 
     // 2. Fix camera rotation aligned with screen plane normal [0, 0, 1] facing screen plane
     camera.rotation.set(0, 0, 0);
 
-    // 3. Compute asymmetric off-axis projection matrix derived from screen plane geometry & eye position
+    // 3. Compute asymmetric off-axis projection matrix derived from eye displacement & screen geometry
     const near = camera.near || 0.1;
     const far = camera.far || 1000;
     const projMatrix = calculateOffAxisProjectionMatrix(vx, vy, vz, screenDimensions, near, far);
@@ -52,7 +55,7 @@ export const RouteCCameraRig: React.FC<RouteCCameraRigProps> = ({
     // 5. Emit frustum bounds for real-time telemetry overlay if callback provided
     if (onFrustumUpdate) {
       const bounds = calculateFrustumBounds(vx, vy, vz, screenDimensions, near);
-      onFrustumUpdate(bounds, [vx, vy, vz]);
+      onFrustumUpdate(bounds, [vx + px, vy + py, vz + pz]);
     }
   });
 
