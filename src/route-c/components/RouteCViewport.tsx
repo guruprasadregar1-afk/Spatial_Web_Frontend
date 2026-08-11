@@ -40,12 +40,15 @@ import { RouteCCameraRig } from './RouteCCameraRig';
 import { FrustumBounds } from '@/spatial/projection/OffAxisProjection';
 import { LandmarkNodeRenderer } from '@/features/spatial-canvas/components/renderers/LandmarkNodeRenderer';
 import { RootNodeRenderer } from '@/features/spatial-canvas/components/renderers/RootNodeRenderer';
+import { NodeRendererDispatcher } from '@/features/spatial-canvas/components/renderers/NodeRendererDispatcher';
 import { SpatialConnections } from '@/features/spatial-canvas/components/renderers/SpatialConnections';
+import { ContentIngestPanel } from '@/features/content-ingest/components/ContentIngestPanel';
 import { useSpatialStore } from '@/store/slices/spatialSlice';
+import { Globe } from 'lucide-react';
 
 // Camera control modes
 export type CameraControlMode = 'spatial' | 'manual' | 'orbit';
-export type ViewSceneMode = 'jaipur-mini' | 'volumetric' | 'debug-overlay';
+export type ViewSceneMode = 'jaipur-mini' | 'volumetric' | 'debug-overlay' | 'content-ingest';
 
 // Boundary-Crossing Animation Loop Ticker Component
 const BoundaryAnimationTicker: React.FC<{
@@ -210,7 +213,42 @@ const MiniJaipur3DScene: React.FC<{
 });
 MiniJaipur3DScene.displayName = 'MiniJaipur3DScene';
 
+// Actual 3D Web Content Ingest Scene Component (Consumes Store Graph and Head Parallax)
+const ContentIngest3DScene: React.FC<{
+  graph: any;
+  selectedNodeId: string | null;
+  hoveredNodeId: string | null;
+  onSelectNode: (id: string | null) => void;
+  onHoverNode: (id: string | null) => void;
+}> = React.memo(({ graph, selectedNodeId, hoveredNodeId, onSelectNode, onHoverNode }) => {
+  return (
+    <group>
+      {/* Ground Grid for Ingested Web Content Scene */}
+      <gridHelper args={[60, 30, '#00f3ff', '#1e293b']} position={[0, -2, 0]} />
+
+      {/* Render 3D Laser Connections */}
+      <SpatialConnections />
+
+      {/* Render Ingested Nodes using existing NodeRendererDispatcher */}
+      {graph &&
+        Object.values(graph.nodes || {}).map((node: any) => (
+          <NodeRendererDispatcher
+            key={node.id}
+            node={node}
+            isSelected={selectedNodeId === node.id}
+            isHovered={hoveredNodeId === node.id}
+            onSelect={(id) => onSelectNode(id)}
+            onHover={(id) => onHoverNode(id)}
+          />
+        ))}
+    </group>
+  );
+});
+ContentIngest3DScene.displayName = 'ContentIngest3DScene';
+
 export const RouteCViewport: React.FC = () => {
+  const { graph, selectedNodeId, hoveredNodeId, setSelectedNodeId, setHoveredNodeId } = useSpatialStore();
+
   const [activeDriverId, setActiveDriverId] = useState<string>('virtual-point-cloud-driver');
   const [sceneMode, setSceneMode] = useState<ViewSceneMode>('jaipur-mini');
   const [trackingMode, setTrackingMode] = useState<TrackingMode>('manual');
@@ -523,9 +561,18 @@ export const RouteCViewport: React.FC = () => {
             </button>
 
             <button
+              onClick={() => setSceneMode('content-ingest')}
+              className={`px-2.5 py-1 rounded-lg font-bold flex items-center gap-1 transition-all ${
+                sceneMode === 'content-ingest' ? 'bg-cyan-500 text-gray-950 glow-cyan' : 'text-gray-400 hover:text-white'
+              }`}
+            >
+              <Globe className="w-3.5 h-3.5" /> Content Ingest
+            </button>
+
+            <button
               onClick={() => setSceneMode('debug-overlay')}
               className={`px-2.5 py-1 rounded-lg font-bold flex items-center gap-1 transition-all ${
-                sceneMode === 'debug-overlay' ? 'bg-cyan-500 text-gray-950 glow-cyan' : 'text-gray-400 hover:text-white'
+                sceneMode === 'debug-overlay' ? 'bg-amber-500 text-gray-950 glow-amber' : 'text-gray-400 hover:text-white'
               }`}
             >
               <Eye className="w-3.5 h-3.5" /> Debug Overlay
@@ -551,6 +598,9 @@ export const RouteCViewport: React.FC = () => {
         onPointerMove={handlePointerMove}
         onClick={handlePointerClick}
       >
+        {/* Floating Content Ingest Panel Overlay */}
+        {sceneMode === 'content-ingest' && <ContentIngestPanel />}
+
         <Canvas dpr={[1, 1.5]} camera={{ position: [0, 0, 15], fov: 45, near: 0.1, far: 1000 }}>
           <color attach="background" args={['#060911']} />
           <ambientLight intensity={0.6} />
@@ -585,7 +635,18 @@ export const RouteCViewport: React.FC = () => {
               />
             )}
 
-            {/* 2. DEVELOPER DEBUG CALIBRATION OVERLAY SCENE */}
+            {/* 2. WEB CONTENT INGEST 3D SCENE (Immutable World Coordinates with Head Parallax) */}
+            {sceneMode === 'content-ingest' && (
+              <ContentIngest3DScene
+                graph={graph}
+                selectedNodeId={selectedNodeId}
+                hoveredNodeId={hoveredNodeId}
+                onSelectNode={(id) => setSelectedNodeId(id)}
+                onHoverNode={(id) => setHoveredNodeId(id)}
+              />
+            )}
+
+            {/* 3. DEVELOPER DEBUG CALIBRATION OVERLAY SCENE */}
             {sceneMode === 'debug-overlay' && (
               <VisualDebugOverlay viewerPos={viewerState.position} cameraMode={cameraMode} />
             )}
