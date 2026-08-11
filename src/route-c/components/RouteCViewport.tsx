@@ -221,6 +221,53 @@ const ContentIngest3DScene: React.FC<{
   onSelectNode: (id: string | null) => void;
   onHoverNode: (id: string | null) => void;
 }> = React.memo(({ graph, selectedNodeId, hoveredNodeId, onSelectNode, onHoverNode }) => {
+  // Normalize ingested graph node positions so all nodes fit comfortably inside Route C viewport bounds
+  const normalizedNodes = React.useMemo(() => {
+    if (!graph || !graph.nodes) return [];
+    const rawNodes: any[] = Object.values(graph.nodes);
+    if (rawNodes.length === 0) return [];
+
+    let minX = Infinity, maxX = -Infinity;
+    let minY = Infinity, maxY = -Infinity;
+    let minZ = Infinity, maxZ = -Infinity;
+
+    rawNodes.forEach((node) => {
+      const [px, py, pz] = node.transform?.position || [0, 0, 0];
+      if (px < minX) minX = px;
+      if (px > maxX) maxX = px;
+      if (py < minY) minY = py;
+      if (py > maxY) maxY = py;
+      if (pz < minZ) minZ = pz;
+      if (pz > maxZ) maxZ = pz;
+    });
+
+    const rangeX = maxX - minX || 1;
+    const rangeY = maxY - minY || 1;
+    const rangeZ = maxZ - minZ || 1;
+
+    const maxSpan = Math.max(rangeX, rangeY, rangeZ);
+    const targetScale = maxSpan > 24 ? 24 / maxSpan : 1.0;
+
+    const centerX = (minX + maxX) / 2;
+    const centerY = (minY + maxY) / 2;
+    const centerZ = (minZ + maxZ) / 2;
+
+    return rawNodes.map((node) => {
+      const [px, py, pz] = node.transform?.position || [0, 0, 0];
+      const nx = (px - centerX) * targetScale;
+      const ny = (py - centerY) * targetScale + 1.0;
+      const nz = (pz - centerZ) * targetScale - 2.0;
+
+      return {
+        ...node,
+        transform: {
+          ...node.transform,
+          position: [nx, ny, nz] as [number, number, number],
+        },
+      };
+    });
+  }, [graph]);
+
   return (
     <group>
       {/* Ground Grid for Ingested Web Content Scene */}
@@ -230,17 +277,16 @@ const ContentIngest3DScene: React.FC<{
       <SpatialConnections />
 
       {/* Render Ingested Nodes using existing NodeRendererDispatcher */}
-      {graph &&
-        Object.values(graph.nodes || {}).map((node: any) => (
-          <NodeRendererDispatcher
-            key={node.id}
-            node={node}
-            isSelected={selectedNodeId === node.id}
-            isHovered={hoveredNodeId === node.id}
-            onSelect={(id) => onSelectNode(id)}
-            onHover={(id) => onHoverNode(id)}
-          />
-        ))}
+      {normalizedNodes.map((node: any) => (
+        <NodeRendererDispatcher
+          key={node.id}
+          node={node}
+          isSelected={selectedNodeId === node.id}
+          isHovered={hoveredNodeId === node.id}
+          onSelect={(id) => onSelectNode(id)}
+          onHover={(id) => onHoverNode(id)}
+        />
+      ))}
     </group>
   );
 });
