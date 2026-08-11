@@ -239,6 +239,7 @@ export const RouteCViewport: React.FC = () => {
   const [currentRegion, setCurrentRegion] = useState<SpatialDepthRegion>(SpatialDepthRegion.BEYOND_SCREEN);
   const [hoveredElementId, setHoveredElementId] = useState<string | null>(null);
   const [isViewportLoading, setIsViewportLoading] = useState<boolean>(true);
+  const [trackingError, setTrackingError] = useState<string | null>(null);
 
   const virtualDriverRef = useRef(new VirtualPointCloudDriver());
   const physicalDriverRef = useRef(new PhysicalHardwareDriverStub());
@@ -357,27 +358,35 @@ export const RouteCViewport: React.FC = () => {
   const handleTrackingModeChange = async (mode: TrackingMode) => {
     setTrackingMode(mode);
     headPoseAdapter.setMode(mode);
+    setTrackingError(null);
 
     if (mode === 'webcam') {
       setIsViewportLoading(true);
       setCameraMode('spatial');
       mockTrackingProvider.stopMockTracking();
-      const videoEl = await webcamService.startWebcam();
-      if (videoEl) {
-        const initialized = await faceTracker.initialize();
-        if (initialized) {
-          faceTracker.startTracking(videoEl, handlePoseUpdate);
-        } else {
-          setTrackingMode('manual');
-          setCameraMode('manual');
-          mockTrackingProvider.startMockTracking(handlePoseUpdate);
+
+      try {
+        const videoEl = await webcamService.startWebcam();
+        if (!videoEl) {
+          throw new Error('Webcam access was denied or no camera device was found.');
         }
-      } else {
+
+        const initialized = await faceTracker.initialize();
+        if (!initialized) {
+          throw new Error('Failed to initialize MediaPipe FaceLandmarker vision model.');
+        }
+
+        faceTracker.startTracking(videoEl, handlePoseUpdate);
+      } catch (err: any) {
+        console.warn('Webcam / FaceTracker initialization failed:', err);
+        const errorMsg = err?.message || 'Unable to access webcam or initialize head pose tracking.';
+        setTrackingError(errorMsg);
         setTrackingMode('manual');
         setCameraMode('manual');
         mockTrackingProvider.startMockTracking(handlePoseUpdate);
+      } finally {
+        setIsViewportLoading(false);
       }
-      setIsViewportLoading(false);
     } else if (mode === 'manual') {
       setCameraMode('manual');
       webcamService.stopWebcam();
@@ -597,6 +606,23 @@ export const RouteCViewport: React.FC = () => {
             <div className="glass-panel p-6 rounded-2xl border border-cyan-500/40 shadow-2xl bg-[#060911]/90">
               <Loader label="Initializing 3D Spatial Canvas & Vision Pipeline..." />
             </div>
+          </div>
+        )}
+
+        {/* Error Overlay when Webcam permission is denied or MediaPipe init fails */}
+        {trackingError && (
+          <div className="absolute top-6 left-1/2 -translate-x-1/2 z-50 glass-panel p-4 rounded-2xl border border-rose-500/50 bg-rose-950/90 text-rose-200 text-xs font-mono flex items-center gap-3 shadow-2xl backdrop-blur-md">
+            <AlertTriangle className="w-5 h-5 text-rose-400 shrink-0" />
+            <div className="flex flex-col gap-0.5">
+              <span className="font-bold text-white">Tracking Initialization Error</span>
+              <span className="text-[11px] text-rose-300">{trackingError}</span>
+            </div>
+            <button
+              onClick={() => setTrackingError(null)}
+              className="ml-3 px-3 py-1.5 rounded-xl bg-gray-900 border border-gray-800 text-gray-300 hover:text-white font-bold transition-all"
+            >
+              Dismiss
+            </button>
           </div>
         )}
 
