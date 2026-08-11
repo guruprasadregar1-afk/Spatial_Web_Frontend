@@ -1,6 +1,7 @@
 'use client';
 
-import React from 'react';
+import React, { useMemo, useRef, useLayoutEffect } from 'react';
+import * as THREE from 'three';
 import { Html } from '@react-three/drei';
 import { SpatialNode } from '@/types/spatial';
 
@@ -21,6 +22,41 @@ export const CardNodeRenderer: React.FC<RendererProps> = ({
 }) => {
   const [x, y, z] = node.transform.position;
   const color = isSelected ? '#00f3ff' : isHovered ? '#ffaa00' : node.render.color || '#7000ff';
+  const pinRef = useRef<THREE.InstancedMesh>(null);
+
+  // Compute 6 instanced corner pins at the octahedron vertices
+  const { matrices, count } = useMemo(() => {
+    const r = 1.05;
+    const positions: [number, number, number][] = [
+      [r, 0, 0],
+      [-r, 0, 0],
+      [0, r, 0],
+      [0, -r, 0],
+      [0, 0, r],
+      [0, 0, -r],
+    ];
+
+    const mats: THREE.Matrix4[] = [];
+    const dummy = new THREE.Object3D();
+
+    positions.forEach(([px, py, pz]) => {
+      dummy.position.set(px, py, pz);
+      dummy.rotation.set(0, 0, 0);
+      dummy.scale.set(1, 1, 1);
+      dummy.updateMatrix();
+      mats.push(dummy.matrix.clone());
+    });
+
+    return { matrices: mats, count: positions.length };
+  }, []);
+
+  useLayoutEffect(() => {
+    if (!pinRef.current) return;
+    matrices.forEach((mat, idx) => {
+      pinRef.current!.setMatrixAt(idx, mat);
+    });
+    pinRef.current.instanceMatrix.needsUpdate = true;
+  }, [matrices]);
 
   return (
     <group
@@ -73,6 +109,18 @@ export const CardNodeRenderer: React.FC<RendererProps> = ({
           metalness={0.8}
         />
       </mesh>
+
+      {/* Instanced Vertex Corner Pins */}
+      <instancedMesh ref={pinRef} args={[undefined, undefined, count]}>
+        <octahedronGeometry args={[0.12, 0]} />
+        <meshStandardMaterial
+          color={color}
+          emissive={color}
+          emissiveIntensity={0.8}
+          roughness={0.1}
+          metalness={0.9}
+        />
+      </instancedMesh>
 
       {/* Glowing Outer Wireframe Ring */}
       <mesh position={[0, 0, 0]}>
