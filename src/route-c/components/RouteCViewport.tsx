@@ -238,6 +238,7 @@ export const RouteCViewport: React.FC = () => {
   const [currentZ, setCurrentZ] = useState<number>(4.0);
   const [currentRegion, setCurrentRegion] = useState<SpatialDepthRegion>(SpatialDepthRegion.BEYOND_SCREEN);
   const [hoveredElementId, setHoveredElementId] = useState<string | null>(null);
+  const [isViewportLoading, setIsViewportLoading] = useState<boolean>(true);
 
   const virtualDriverRef = useRef(new VirtualPointCloudDriver());
   const physicalDriverRef = useRef(new PhysicalHardwareDriverStub());
@@ -319,6 +320,7 @@ export const RouteCViewport: React.FC = () => {
   }, [cameraMode, trackingMode]);
 
   useEffect(() => {
+    setIsViewportLoading(true);
     displayManager.registerDriver(virtualDriverRef.current);
     displayManager.registerDriver(physicalDriverRef.current);
     displayManager.setActiveDriver('virtual-point-cloud-driver');
@@ -328,11 +330,17 @@ export const RouteCViewport: React.FC = () => {
 
     frameStream.start(30);
 
+    // Hide loading overlay once initial WebGL & tracking pipeline mounts
+    const timer = setTimeout(() => {
+      setIsViewportLoading(false);
+    }, 400);
+
     const interval = setInterval(() => {
       setTelemetry(frameStream.getTelemetryStatistics());
     }, 100);
 
     return () => {
+      clearTimeout(timer);
       clearInterval(interval);
       frameStream.stop();
       webcamService.stopWebcam();
@@ -351,6 +359,7 @@ export const RouteCViewport: React.FC = () => {
     headPoseAdapter.setMode(mode);
 
     if (mode === 'webcam') {
+      setIsViewportLoading(true);
       setCameraMode('spatial');
       mockTrackingProvider.stopMockTracking();
       const videoEl = await webcamService.startWebcam();
@@ -368,11 +377,13 @@ export const RouteCViewport: React.FC = () => {
         setCameraMode('manual');
         mockTrackingProvider.startMockTracking(handlePoseUpdate);
       }
+      setIsViewportLoading(false);
     } else if (mode === 'manual') {
       setCameraMode('manual');
       webcamService.stopWebcam();
       faceTracker.stopTracking();
       mockTrackingProvider.startMockTracking(handlePoseUpdate);
+      setIsViewportLoading(false);
     } else {
       setCameraMode('orbit');
       webcamService.stopWebcam();
@@ -381,6 +392,7 @@ export const RouteCViewport: React.FC = () => {
       const reset = headPoseAdapter.resetViewerPosition();
       viewerStateRef.current = reset;
       setViewerState(reset);
+      setIsViewportLoading(false);
     }
   };
 
@@ -578,6 +590,15 @@ export const RouteCViewport: React.FC = () => {
             />
           </Suspense>
         </Canvas>
+
+        {/* Explicit Loading Overlay for Async Mount, Webcam Permission & MediaPipe Downloads */}
+        {isViewportLoading && (
+          <div className="absolute inset-0 bg-[#060911]/80 backdrop-blur-sm z-50 flex items-center justify-center pointer-events-none">
+            <div className="glass-panel p-6 rounded-2xl border border-cyan-500/40 shadow-2xl bg-[#060911]/90">
+              <Loader label="Initializing 3D Spatial Canvas & Vision Pipeline..." />
+            </div>
+          </div>
+        )}
 
         {/* Development Telemetry & Real-Time Diagnostic Panel (Prompt 11 Rule 2, 3, 13 & Step 3) */}
         <aside className="absolute bottom-6 right-6 w-[420px] max-h-[85vh] overflow-y-auto glass-panel p-4 rounded-2xl border border-purple-500/40 shadow-2xl z-30 font-mono text-xs text-gray-200 flex flex-col gap-2 bg-[#0b0f19]/95">
