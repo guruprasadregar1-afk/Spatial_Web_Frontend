@@ -6,21 +6,26 @@ export interface ScreenDimensions {
   height: number;
 }
 
+export interface FrustumBounds {
+  left: number;
+  right: number;
+  top: number;
+  bottom: number;
+}
+
 /**
- * Calculates asymmetric off-axis projection matrix for Three.js camera
- * based on user's estimated head position (eyeX, eyeY, eyeZ) relative to monitor screen plane.
+ * Calculates near-plane asymmetric frustum bounds for off-axis perspective projection
  */
-export function calculateOffAxisProjectionMatrix(
+export function calculateFrustumBounds(
   eyeX: number,
   eyeY: number,
   eyeZ: number,
   screenDim: ScreenDimensions = {
-    width: COORDINATE_SYSTEM.DEFAULT_SCREEN_WIDTH,
-    height: COORDINATE_SYSTEM.DEFAULT_SCREEN_HEIGHT,
+    width: 24,
+    height: 14,
   },
-  near: number = COORDINATE_SYSTEM.NEAR_PLANE,
-  far: number = COORDINATE_SYSTEM.FAR_PLANE
-): THREE.Matrix4 {
+  near: number = COORDINATE_SYSTEM.NEAR_PLANE
+): FrustumBounds {
   const halfW = screenDim.width / 2;
   const halfH = screenDim.height / 2;
 
@@ -33,7 +38,27 @@ export function calculateOffAxisProjectionMatrix(
   const bottom = ((-halfH - eyeY) * near) / d;
   const top = ((halfH - eyeY) * near) / d;
 
-  // Construct asymmetric frustum projection matrix
+  return { left, right, top, bottom };
+}
+
+/**
+ * Calculates asymmetric off-axis projection matrix for Three.js camera
+ * based on user's estimated head position (eyeX, eyeY, eyeZ) relative to monitor screen plane.
+ */
+export function calculateOffAxisProjectionMatrix(
+  eyeX: number,
+  eyeY: number,
+  eyeZ: number,
+  screenDim: ScreenDimensions = {
+    width: 24,
+    height: 14,
+  },
+  near: number = COORDINATE_SYSTEM.NEAR_PLANE,
+  far: number = COORDINATE_SYSTEM.FAR_PLANE
+): THREE.Matrix4 {
+  const { left, right, top, bottom } = calculateFrustumBounds(eyeX, eyeY, eyeZ, screenDim, near);
+
+  // Construct asymmetric frustum projection matrix using Three.js makePerspective
   const matrix = new THREE.Matrix4();
   matrix.makePerspective(left, right, top, bottom, near, far);
 

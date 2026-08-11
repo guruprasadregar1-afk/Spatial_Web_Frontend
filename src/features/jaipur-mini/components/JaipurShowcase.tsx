@@ -154,11 +154,20 @@ export const JaipurShowcase: React.FC = () => {
           </div>
         </div>
 
-        {/* Scene Dropdown Selector */}
-        <div className="glass-panel px-4 py-1.5 rounded-xl border border-spatial-border/40 flex items-center gap-2 text-xs font-semibold text-gray-200 cursor-pointer hover:border-spatial-accent/50">
-          <Folder className="w-3.5 h-3.5 text-cyan-400" />
-          <span>Jaipur Spatial Node Graph</span>
-          <ChevronDown className="w-3.5 h-3.5 text-gray-400 ml-2" />
+        {/* Scene Dropdown Selector & Route C Parallax Button */}
+        <div className="flex items-center gap-3">
+          <div className="glass-panel px-4 py-1.5 rounded-xl border border-spatial-border/40 flex items-center gap-2 text-xs font-semibold text-gray-200 cursor-pointer hover:border-spatial-accent/50">
+            <Folder className="w-3.5 h-3.5 text-cyan-400" />
+            <span>Jaipur Spatial Node Graph</span>
+            <ChevronDown className="w-3.5 h-3.5 text-gray-400 ml-2" />
+          </div>
+
+          <a
+            href="/route-c"
+            className="px-3 py-1.5 rounded-xl bg-purple-600/80 hover:bg-purple-600 text-white text-xs font-bold flex items-center gap-1.5 border border-purple-400/40 glow-purple transition-all"
+          >
+            <Camera className="w-3.5 h-3.5" /> Route C Spatial Parallax
+          </a>
         </div>
 
         {/* Right Header Status Telemetry */}

@@ -76,6 +76,10 @@ export class WebcamService {
     return this.status;
   }
 
+  public getStream(): MediaStream | null {
+    return this.stream;
+  }
+
   public getVideoElement(): HTMLVideoElement | null {
     return this.videoElement;
   }

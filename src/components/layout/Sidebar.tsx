@@ -1,8 +1,18 @@
+'use client';
+
 import React from 'react';
 import { Box, MapPin, Sparkles, UploadCloud, Database, Layers, Activity } from 'lucide-react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 
 export const Sidebar: React.FC = () => {
+  const pathname = usePathname();
+
+  const isHome = pathname === '/';
+  const isJaipur = pathname === '/jaipur' || pathname === '/route-c';
+  const isAiGen = pathname === '/ai-generator';
+  const isIngest = pathname === '/ingest';
+
   return (
     <aside className="w-64 glass-panel border-r border-spatial-border/30 fixed top-16 bottom-0 left-0 p-4 flex flex-col justify-between hidden lg:flex z-40">
       <div className="flex flex-col gap-6">
@@ -11,25 +21,41 @@ export const Sidebar: React.FC = () => {
           <div className="flex flex-col gap-1">
             <Link
               href="/"
-              className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-spatial-accent/10 text-cyan-300 font-medium text-sm border border-spatial-accent/30"
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg font-medium text-sm transition-all ${
+                isHome
+                  ? 'bg-spatial-accent/10 text-cyan-300 border border-spatial-accent/30 shadow-md'
+                  : 'hover:bg-white/5 text-gray-300 hover:text-white'
+              }`}
             >
               <Box className="w-4 h-4 text-cyan-300" /> 3D Spatial Canvas
             </Link>
             <Link
               href="/jaipur"
-              className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-white/5 text-gray-300 hover:text-white font-medium text-sm transition-all"
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg font-medium text-sm transition-all ${
+                isJaipur
+                  ? 'bg-purple-600/20 text-purple-300 border border-purple-500/40 shadow-md glow-purple'
+                  : 'hover:bg-white/5 text-gray-300 hover:text-white'
+              }`}
             >
               <MapPin className="w-4 h-4 text-amber-400" /> Mini Jaipur 3D
             </Link>
             <Link
               href="/ai-generator"
-              className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-white/5 text-gray-300 hover:text-white font-medium text-sm transition-all"
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg font-medium text-sm transition-all ${
+                isAiGen
+                  ? 'bg-purple-600/20 text-purple-300 border border-purple-500/40 shadow-md'
+                  : 'hover:bg-white/5 text-gray-300 hover:text-white'
+              }`}
             >
               <Sparkles className="w-4 h-4 text-purple-400" /> AI Spatial Generator
             </Link>
             <Link
               href="/ingest"
-              className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-white/5 text-gray-300 hover:text-white font-medium text-sm transition-all"
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg font-medium text-sm transition-all ${
+                isIngest
+                  ? 'bg-blue-600/20 text-blue-300 border border-blue-500/40 shadow-md'
+                  : 'hover:bg-white/5 text-gray-300 hover:text-white'
+              }`}
             >
               <UploadCloud className="w-4 h-4 text-blue-400" /> Web Content Ingest
             </Link>

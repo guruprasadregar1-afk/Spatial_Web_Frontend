@@ -12,6 +12,168 @@ interface RendererProps {
   onHover?: (id: string | null) => void;
 }
 
+/**
+ * Procedurally-generated 3D Building Geometry for Hawa Mahal
+ * Multi-tiered step-back facade with roof turrets
+ */
+const HawaMahalGeometry: React.FC<{ material: React.ReactNode }> = ({ material }) => (
+  <group position={[0, 0, 0]}>
+    {/* Tier 1 - Base Level */}
+    <mesh position={[0, 0.5, 0]}>
+      <boxGeometry args={[3.4, 1.0, 1.2]} />
+      {material}
+    </mesh>
+    {/* Tier 2 */}
+    <mesh position={[0, 1.3, 0]}>
+      <boxGeometry args={[2.8, 0.8, 1.0]} />
+      {material}
+    </mesh>
+    {/* Tier 3 */}
+    <mesh position={[0, 2.0, 0]}>
+      <boxGeometry args={[2.2, 0.7, 0.8]} />
+      {material}
+    </mesh>
+    {/* Tier 4 */}
+    <mesh position={[0, 2.65, 0]}>
+      <boxGeometry args={[1.6, 0.6, 0.6]} />
+      {material}
+    </mesh>
+    {/* Tier 5 - Top Crown */}
+    <mesh position={[0, 3.15, 0]}>
+      <boxGeometry args={[1.0, 0.4, 0.4]} />
+      {material}
+    </mesh>
+
+    {/* Side Turrets / Domes */}
+    <mesh position={[-1.4, 1.8, 0]}>
+      <coneGeometry args={[0.25, 0.6, 6]} />
+      {material}
+    </mesh>
+    <mesh position={[1.4, 1.8, 0]}>
+      <coneGeometry args={[0.25, 0.6, 6]} />
+      {material}
+    </mesh>
+    <mesh position={[0, 3.5, 0]}>
+      <coneGeometry args={[0.2, 0.5, 6]} />
+      {material}
+    </mesh>
+  </group>
+);
+
+/**
+ * Procedurally-generated 3D Building Geometry for Amer Fort
+ * Fortified hilltop structure with corner bastions and main gate
+ */
+const AmerFortGeometry: React.FC<{ material: React.ReactNode }> = ({ material }) => (
+  <group position={[0, 0, 0]}>
+    {/* Main Fort Keep */}
+    <mesh position={[0, 0.9, 0]}>
+      <boxGeometry args={[3.2, 1.8, 2.4]} />
+      {material}
+    </mesh>
+    {/* Upper Palace Wing */}
+    <mesh position={[-0.4, 2.1, -0.3]}>
+      <boxGeometry args={[2.0, 0.8, 1.4]} />
+      {material}
+    </mesh>
+    {/* 4 Corner Cylindrical Bastions */}
+    <mesh position={[-1.5, 1.0, -1.1]}>
+      <cylinderGeometry args={[0.45, 0.5, 2.0, 8]} />
+      {material}
+    </mesh>
+    <mesh position={[1.5, 1.0, -1.1]}>
+      <cylinderGeometry args={[0.45, 0.5, 2.0, 8]} />
+      {material}
+    </mesh>
+    <mesh position={[-1.5, 1.0, 1.1]}>
+      <cylinderGeometry args={[0.45, 0.5, 2.0, 8]} />
+      {material}
+    </mesh>
+    <mesh position={[1.5, 1.0, 1.1]}>
+      <cylinderGeometry args={[0.45, 0.5, 2.0, 8]} />
+      {material}
+    </mesh>
+    {/* Bastion Roof Domes */}
+    <mesh position={[-1.5, 2.2, -1.1]}>
+      <coneGeometry args={[0.45, 0.5, 8]} />
+      {material}
+    </mesh>
+    <mesh position={[1.5, 2.2, -1.1]}>
+      <coneGeometry args={[0.45, 0.5, 8]} />
+      {material}
+    </mesh>
+    <mesh position={[-1.5, 2.2, 1.1]}>
+      <coneGeometry args={[0.45, 0.5, 8]} />
+      {material}
+    </mesh>
+    <mesh position={[1.5, 2.2, 1.1]}>
+      <coneGeometry args={[0.45, 0.5, 8]} />
+      {material}
+    </mesh>
+  </group>
+);
+
+/**
+ * Procedurally-generated 3D Building Geometry for City Palace
+ * Multi-story courtyard pavilion with central dome
+ */
+const CityPalaceGeometry: React.FC<{ material: React.ReactNode }> = ({ material }) => (
+  <group position={[0, 0, 0]}>
+    {/* Courtyard Base */}
+    <mesh position={[0, 0.6, 0]}>
+      <boxGeometry args={[3.0, 1.2, 2.8]} />
+      {material}
+    </mesh>
+    {/* Upper Pavilion */}
+    <mesh position={[0, 1.6, 0]}>
+      <boxGeometry args={[1.8, 0.8, 1.8]} />
+      {material}
+    </mesh>
+    {/* Central Royal Dome */}
+    <mesh position={[0, 2.3, 0]}>
+      <sphereGeometry args={[0.65, 12, 12]} />
+      {material}
+    </mesh>
+    {/* Corner Finials */}
+    <mesh position={[-0.8, 2.1, -0.8]}>
+      <coneGeometry args={[0.2, 0.4, 6]} />
+      {material}
+    </mesh>
+    <mesh position={[0.8, 2.1, -0.8]}>
+      <coneGeometry args={[0.2, 0.4, 6]} />
+      {material}
+    </mesh>
+    <mesh position={[-0.8, 2.1, 0.8]}>
+      <coneGeometry args={[0.2, 0.4, 6]} />
+      {material}
+    </mesh>
+    <mesh position={[0.8, 2.1, 0.8]}>
+      <coneGeometry args={[0.2, 0.4, 6]} />
+      {material}
+    </mesh>
+  </group>
+);
+
+/**
+ * Default Extruded Low-Poly Architectural Building
+ */
+const DefaultLandmarkGeometry: React.FC<{ material: React.ReactNode }> = ({ material }) => (
+  <group position={[0, 0, 0]}>
+    <mesh position={[0, 0.8, 0]}>
+      <boxGeometry args={[2.4, 1.6, 2.0]} />
+      {material}
+    </mesh>
+    <mesh position={[0, 1.9, 0]}>
+      <boxGeometry args={[1.4, 0.6, 1.2]} />
+      {material}
+    </mesh>
+    <mesh position={[0, 2.4, 0]}>
+      <coneGeometry args={[0.5, 0.6, 6]} />
+      {material}
+    </mesh>
+  </group>
+);
+
 export const LandmarkNodeRenderer: React.FC<RendererProps> = ({
   node,
   isSelected,
@@ -20,23 +182,23 @@ export const LandmarkNodeRenderer: React.FC<RendererProps> = ({
   onHover,
 }) => {
   const [x, y, z] = node.transform.position;
-  const color = isSelected ? '#00f3ff' : isHovered ? '#ffaa00' : node.render.color || '#e11d48';
 
-  // Map real photographic texture URL for Jaipur monuments
-  const imageUrlMap: Record<string, string> = {
-    'jaipur-hawa-mahal': '/images/hawa_mahal.jpg',
-    'jaipur-amer-fort': '/images/amer_fort.jpg',
-    'jaipur-city-palace': '/images/city_palace.jpg',
-    'jaipur-jantar-mantar': '/images/city_palace.jpg',
-    'jaipur-jal-mahal': '/images/hawa_mahal.jpg',
-  };
+  // Pink/salmon color palette (#e8a598) with subtle hover/selection state highlight
+  const salmonColor = isSelected ? '#00f3ff' : isHovered ? '#ffaa00' : '#e8a598';
 
-  const hasPhoto = Boolean(imageUrlMap[node.id] || node.render.imageUrl);
-  const photoUrl = imageUrlMap[node.id] || node.render.imageUrl || '';
+  // Flat-shaded terracotta material
+  const buildingMaterial = (
+    <meshStandardMaterial
+      color={salmonColor}
+      flatShading={true}
+      roughness={0.5}
+      metalness={0.1}
+    />
+  );
 
   return (
     <group
-      position={[x, y + 1.2, z]}
+      position={[x, y, z]}
       onClick={(e) => {
         e.stopPropagation();
         onSelect?.(node.id);
@@ -50,8 +212,8 @@ export const LandmarkNodeRenderer: React.FC<RendererProps> = ({
         onHover?.(null);
       }}
     >
-      {/* 3D Floating Title Tag Badge */}
-      <Html position={[0, hasPhoto ? 3.8 : 2.2, 0]} center distanceFactor={24} zIndexRange={[10, 0]}>
+      {/* 3D Floating Title Tag Badge (No Photo Card) */}
+      <Html position={[0, 3.8, 0]} center distanceFactor={24} zIndexRange={[10, 0]}>
         <div
           className={`glass-panel px-3 py-1.5 rounded-xl border transition-all shadow-2xl pointer-events-none whitespace-nowrap flex items-center gap-2 ${
             isSelected
@@ -66,51 +228,34 @@ export const LandmarkNodeRenderer: React.FC<RendererProps> = ({
         </div>
       </Html>
 
-      {/* Render Real Photo Cutout ONLY if photo is provided (e.g. Jaipur Landmarks) */}
-      {hasPhoto ? (
-        <Html position={[0, 1.8, 0]} center distanceFactor={20} zIndexRange={[10, 0]}>
-          <div
-            className={`relative w-44 h-36 rounded-2xl overflow-hidden border-2 transition-all shadow-2xl pointer-events-none ${
-              isSelected
-                ? 'border-cyan-400 glow-cyan scale-105'
-                : isHovered
-                ? 'border-amber-400 glow-purple'
-                : 'border-spatial-border/60 hover:border-cyan-400/80'
-            }`}
-          >
-            <img src={photoUrl} alt={node.content.title} className="w-full h-full object-cover rounded-xl" />
-            <div className="absolute inset-0 bg-gradient-to-t from-gray-950/90 via-transparent to-transparent flex items-end p-2">
-              <span className="text-[11px] font-bold text-cyan-300 font-mono truncate">{node.content.title}</span>
-            </div>
-          </div>
-        </Html>
-      ) : (
-        /* Render Glowing 3D Celestial Body Sphere for Universe Nodes (Sun, Earth, Mars, Jupiter, etc.) */
-        <group>
-          <mesh position={[0, 0, 0]}>
-            <sphereGeometry args={[1.2, 32, 32]} />
-            <meshStandardMaterial
-              color={color}
-              emissive={color}
-              emissiveIntensity={isHovered || isSelected ? 0.8 : 0.35}
-              roughness={0.1}
-              metalness={0.8}
-            />
-          </mesh>
+      {/* Dark Navy Ground Pad with Cyan Wireframe Grid Network */}
+      <group position={[0, 0, 0]}>
+        <mesh position={[0, 0.02, 0]}>
+          <boxGeometry args={[4.2, 0.04, 3.8]} />
+          <meshStandardMaterial color="#080e1e" roughness={0.9} />
+        </mesh>
+        <mesh position={[0, 0.05, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+          <planeGeometry args={[4.0, 3.6]} />
+          <meshBasicMaterial color="#00f3ff" wireframe transparent opacity={0.4} />
+        </mesh>
+      </group>
 
-          {/* Outer Glowing Wireframe Orbital Ring */}
-          <mesh position={[0, 0, 0]}>
-            <torusGeometry args={[1.8, 0.04, 16, 100]} />
-            <meshBasicMaterial color={color} transparent opacity={0.6} />
-          </mesh>
-        </group>
+      {/* Render Procedural Low-Poly 3D Extruded Building Geometry based on Landmark ID */}
+      {node.id === 'jaipur-hawa-mahal' ? (
+        <HawaMahalGeometry material={buildingMaterial} />
+      ) : node.id === 'jaipur-amer-fort' ? (
+        <AmerFortGeometry material={buildingMaterial} />
+      ) : node.id === 'jaipur-city-palace' ? (
+        <CityPalaceGeometry material={buildingMaterial} />
+      ) : (
+        <DefaultLandmarkGeometry material={buildingMaterial} />
       )}
 
-      {/* Glowing Ground Ring */}
+      {/* Selection / Hover Highlight Base Ring */}
       {(isSelected || isHovered) && (
-        <mesh position={[0, -0.7, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-          <ringGeometry args={[2.0, 2.7, 32]} />
-          <meshBasicMaterial color="#00f3ff" side={2} transparent opacity={0.8} />
+        <mesh position={[0, 0.08, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+          <ringGeometry args={[2.2, 2.5, 32]} />
+          <meshBasicMaterial color={isSelected ? '#00f3ff' : '#ffaa00'} side={2} transparent opacity={0.8} />
         </mesh>
       )}
     </group>

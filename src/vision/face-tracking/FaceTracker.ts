@@ -91,6 +91,10 @@ export class FaceTracker {
     renderLoop();
   }
 
+  public getIsTracking(): boolean {
+    return this.isTracking;
+  }
+
   public stopTracking(): void {
     this.isTracking = false;
     if (this.animationFrameId !== null) {
