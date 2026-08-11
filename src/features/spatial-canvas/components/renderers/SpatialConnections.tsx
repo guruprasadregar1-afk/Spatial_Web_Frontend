@@ -35,7 +35,7 @@ export const SpatialConnections: React.FC = () => {
             linesMap.set(key, {
               start: node.transform.position,
               end: targetNode.transform.position,
-              color: node.render.color || '#a855f7',
+              color: node.render.color || '#00f3ff',
             });
           }
         }
@@ -49,40 +49,41 @@ export const SpatialConnections: React.FC = () => {
   return (
     <>
       {lines.map((line, idx) => {
-        const startVec = new THREE.Vector3(...line.start);
-        const endVec = new THREE.Vector3(...line.end);
+        // Run laser tracks on the ground plane (y = 0.05) to match circuit board style
+        const startVec = new THREE.Vector3(line.start[0], 0.05, line.start[2]);
+        const endVec = new THREE.Vector3(line.end[0], 0.05, line.end[2]);
         const distance = startVec.distanceTo(endVec);
 
         if (distance < 0.1) return null;
 
-        // Midpoint position between start and end nodes
         const midPoint = new THREE.Vector3().addVectors(startVec, endVec).multiplyScalar(0.5);
-
-        // Direction vector from start to end
         const dir = new THREE.Vector3().subVectors(endVec, startVec).normalize();
 
-        // Quaternion rotation aligning THREE Cylinder Y-axis (0,1,0) to direction vector
         const quaternion = new THREE.Quaternion().setFromUnitVectors(upVector, dir);
         const euler = new THREE.Euler().setFromQuaternion(quaternion);
 
         return (
           <group key={idx}>
-            {/* Glowing 3D Laser Beam Cylinder */}
+            {/* Glowing Cyan Ground Circuit Track Line */}
             <mesh position={[midPoint.x, midPoint.y, midPoint.z]} rotation={euler}>
-              <cylinderGeometry args={[0.08, 0.08, distance, 12]} />
-              <meshBasicMaterial color={line.color} transparent opacity={0.65} />
+              <cylinderGeometry args={[0.06, 0.06, distance, 12]} />
+              <meshBasicMaterial color="#00f3ff" transparent opacity={0.8} />
             </mesh>
 
-            {/* Glowing Core Laser Inner Line */}
+            {/* Core White Laser Tube */}
             <mesh position={[midPoint.x, midPoint.y, midPoint.z]} rotation={euler}>
-              <cylinderGeometry args={[0.03, 0.03, distance, 8]} />
+              <cylinderGeometry args={[0.025, 0.025, distance, 8]} />
               <meshBasicMaterial color="#ffffff" transparent opacity={0.9} />
             </mesh>
 
-            {/* Glowing Connection Spheres at Node Joints */}
-            <mesh position={[startVec.x, startVec.y, startVec.z]}>
-              <sphereGeometry args={[0.2, 16, 16]} />
-              <meshBasicMaterial color={line.color} transparent opacity={0.8} />
+            {/* Circuit Node Joint Spheres */}
+            <mesh position={[startVec.x, startVec.y + 0.05, startVec.z]}>
+              <sphereGeometry args={[0.12, 16, 16]} />
+              <meshBasicMaterial color="#00f3ff" transparent opacity={0.9} />
+            </mesh>
+            <mesh position={[endVec.x, endVec.y + 0.05, endVec.z]}>
+              <sphereGeometry args={[0.12, 16, 16]} />
+              <meshBasicMaterial color="#00f3ff" transparent opacity={0.9} />
             </mesh>
           </group>
         );

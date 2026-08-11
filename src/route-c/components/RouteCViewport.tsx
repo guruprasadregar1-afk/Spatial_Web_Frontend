@@ -221,59 +221,69 @@ const ContentIngest3DScene: React.FC<{
   onSelectNode: (id: string | null) => void;
   onHoverNode: (id: string | null) => void;
 }> = React.memo(({ graph, selectedNodeId, hoveredNodeId, onSelectNode, onHoverNode }) => {
-  // Normalize ingested graph node positions so all nodes fit comfortably inside Route C viewport bounds
+  // Lay out nodes in a clean, structured isometric tech-hub layout matching Image 2 DITTO
   const normalizedNodes = React.useMemo(() => {
     if (!graph || !graph.nodes) return [];
     const rawNodes: any[] = Object.values(graph.nodes);
     if (rawNodes.length === 0) return [];
 
-    let minX = Infinity, maxX = -Infinity;
-    let minY = Infinity, maxY = -Infinity;
-    let minZ = Infinity, maxZ = -Infinity;
+    const rootNode = rawNodes.find((n) => n.type === 'root' || n.type === 'building') || rawNodes[0];
+    const childNodes = rawNodes.filter((n) => n.id !== rootNode.id);
 
-    rawNodes.forEach((node) => {
-      const [px, py, pz] = node.transform?.position || [0, 0, 0];
-      if (px < minX) minX = px;
-      if (px > maxX) maxX = px;
-      if (py < minY) minY = py;
-      if (py > maxY) maxY = py;
-      if (pz < minZ) minZ = pz;
-      if (pz > maxZ) maxZ = pz;
+    const result: any[] = [];
+
+    // 1. Central Building Skyscraper sits at origin [0, 0, 0]
+    result.push({
+      ...rootNode,
+      type: 'building',
+      transform: {
+        ...rootNode.transform,
+        position: [0, 0, 0] as [number, number, number],
+      },
     });
 
-    const rangeX = maxX - minX || 1;
-    const rangeY = maxY - minY || 1;
-    const rangeZ = maxZ - minZ || 1;
+    // 2. Lay out satellite nodes in symmetrical circuit rows lying flat on ground plane
+    let leftIdx = 0;
+    let rightIdx = 0;
 
-    const maxSpan = Math.max(rangeX, rangeY, rangeZ);
-    const targetScale = maxSpan > 24 ? 24 / maxSpan : 1.0;
+    childNodes.forEach((node, idx) => {
+      let nx = 0;
+      let nz = 0;
 
-    const centerX = (minX + maxX) / 2;
-    const centerY = (minY + maxY) / 2;
-    const centerZ = (minZ + maxZ) / 2;
+      if (idx % 2 === 0) {
+        // Left side columns
+        const col = Math.floor(leftIdx / 3);
+        const row = leftIdx % 3;
+        nx = -(6.5 + col * 5.5);
+        nz = (row - 1) * 3.2 + 1.0;
+        leftIdx++;
+      } else {
+        // Right side columns
+        const col = Math.floor(rightIdx / 3);
+        const row = rightIdx % 3;
+        nx = 6.5 + col * 5.5;
+        nz = (row - 1) * 3.2 + 1.0;
+        rightIdx++;
+      }
 
-    return rawNodes.map((node) => {
-      const [px, py, pz] = node.transform?.position || [0, 0, 0];
-      const nx = (px - centerX) * targetScale;
-      const ny = (py - centerY) * targetScale + 1.0;
-      const nz = (pz - centerZ) * targetScale - 2.0;
-
-      return {
+      result.push({
         ...node,
         transform: {
           ...node.transform,
-          position: [nx, ny, nz] as [number, number, number],
+          position: [nx, 0.2, nz] as [number, number, number],
         },
-      };
+      });
     });
+
+    return result;
   }, [graph]);
 
   return (
     <group>
-      {/* Ground Grid for Ingested Web Content Scene */}
-      <gridHelper args={[60, 30, '#00f3ff', '#1e293b']} position={[0, -2, 0]} />
+      {/* Dark Navy Ground Grid for Ingested Web Content Scene (Image 2 DITTO) */}
+      <gridHelper args={[70, 35, '#00f3ff', '#0f172a']} position={[0, 0, 0]} />
 
-      {/* Render 3D Laser Connections */}
+      {/* Render 3D Circuit Board Laser Connections */}
       <SpatialConnections />
 
       {/* Render Ingested Nodes using existing NodeRendererDispatcher */}
